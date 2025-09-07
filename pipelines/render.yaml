@@ -1,0 +1,100 @@
+# Copyright 2025 Richard Kosegi
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/rkosegi/yaml-pipeline/refs/heads/main/schemas/pipeline.json?
+# This pipeline merges remote JSON schema catalog with remote one and produces single catalog.json into "public" directory
+vars:
+  localCatalog: catalog.yaml
+  remoteCatalog: https://www.schemastore.org/api/json/catalog.json
+steps:
+  002-import-env:
+    order: 2
+    env:
+      include: '^ACTIONS_STEP_DEBUG$'
+  005-create-dirs:
+    order: 5
+    forEach:
+      item:
+        - .cache
+        - public
+      action:
+        steps:
+          call-mkdir:
+            order: 2
+            os:
+              mkdir:
+                path: '{{ .forEach }}'
+            when: |
+              {{  not (isDir .forEach) }}
+  010-fetch-remote:
+    order: 10
+    exec:
+      program: curl
+      args:
+        - '{{ .vars.remoteCatalog }}'
+      stdout: .cache/remoteStoreContent.json
+    when: |
+      {{
+        and
+          (not (isEmpty .vars.remoteCatalog))
+          (not (fileExists ".cache/remoteStoreContent.json" ))
+      }}
+  020-load-remote:
+    order: 20
+    import:
+      file: .cache/remoteStoreContent.json
+      mode: json
+      path: remote
+    when: |
+      {{
+        and
+          (not (isEmpty .vars.remoteCatalog))
+          ((fileNonEmpty ".cache/remoteStoreContent.json" ))
+      }}
+  030-load-local:
+    order: 30
+    import:
+      file: catalog.yaml
+      mode: yaml
+      path: local
+  050-merge:
+    order: 50
+    template:
+      template: |
+        {{- $all := concat .remote.schemas .local.schemas }}
+        {{- $out := .remote }}
+        {{- (set $out "schemas" $all) | toYaml }}
+      parseAs: yaml
+      path: output
+  070-export-merged:
+    order: 70
+    export:
+      path: output
+      file: public/catalog.json
+      format: json
+  070-export-local:
+    order: 70
+    export:
+      path: local
+      file: public/catalog-local.json
+      format: json
+
+  999-export:
+    order: 999
+    export:
+      file: .cache/999-dump.yaml
+      format: yaml
+    # https://docs.github.com/en/actions/how-tos/monitor-workflows/enable-debug-logging
+    when: |
+      {{ eq .Env.ACTIONS_STEP_DEBUG "true" }}
