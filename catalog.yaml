@@ -1,42 +1,25 @@
-# Copyright 2025 Richard Kosegi
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
----
-# yaml-language-server: $schema=https://json.schemastore.org/schema-catalog.json
 $schema: https://json.schemastore.org/schema-catalog.json
-version: 1
 schemas:
-  - name: YAML Pipeline
-    description: YAML Pipeline definition schema
+  - description: YAML Pipeline definition schema
     fileMatch:
-      - "**/pipelines/*.yaml"
+      - '**/pipelines/*.yaml'
+    name: YAML Pipeline
     url: https://raw.githubusercontent.com/rkosegi/yaml-pipeline/refs/heads/main/schemas/pipeline.json
     versions:
-      v0.0.1: https://github.com/rkosegi/yaml-pipeline/releases/download/v0.0.1/schema-pipeline.json
-      v0.0.2: https://github.com/rkosegi/yaml-pipeline/releases/download/v0.0.2/schema-pipeline.json
-
-  - name: RouterOS 2 REST bridge configuration
-    description: RouterOS 2 REST bridge configuration schema
-    url: https://raw.githubusercontent.com/rkosegi/routeros2rest-bridge/refs/heads/main/schemas/config.schema.json
+      v0.0.1: https://rkosegi.github.io/json-schemas/rkosegi/yaml-pipeline/v0.0.1/pipeline.json
+      v0.0.2: https://rkosegi.github.io/json-schemas/rkosegi/yaml-pipeline/v0.0.2/pipeline.json
+  - description: RouterOS 2 REST bridge configuration schema
     fileMatch:
-      - "**/config.yaml"
+      - '**/config.yaml'
+    name: RouterOS 2 REST bridge configuration
+    url: https://raw.githubusercontent.com/rkosegi/routeros2rest-bridge/refs/heads/main/schemas/config.schema.json
     versions:
       v1.0.0: https://github.com/rkosegi/routeros2rest-bridge/releases/download/v1.0.0/config.schema.json
-
-  - name: Database 2 REST bridge configuration
-    description: Database 2 REST bridge configuration schema
-    url: https://raw.githubusercontent.com/rkosegi/db2rest-bridge/refs/heads/main/schemas/config.schema.json
+  - description: Database 2 REST bridge configuration schema
     fileMatch:
-      - "**/config.yaml"
+      - '**/config.yaml'
+    name: Database 2 REST bridge configuration
+    url: https://raw.githubusercontent.com/rkosegi/db2rest-bridge/refs/heads/main/schemas/config.schema.json
     versions:
       v1.0.6: https://github.com/rkosegi/db2rest-bridge/releases/download/v1.0.6/config.schema.json
+version: 1

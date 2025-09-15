@@ -1,0 +1,143 @@
+# Copyright 2025 Richard Kosegi
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/rkosegi/yaml-pipeline/refs/heads/main/schemas/pipeline.json
+# This pipeline takes JSON schema from remote location and embeds it into this repository.
+vars:
+  GITHUB_REPO: ""
+  RELEASE_TAG: ""
+  ASSET: ""
+  SCHEMA_NAME: ""
+steps:
+  005-create-cache-dir-if-needed:
+    order: 5
+    os:
+      mkdir:
+        path: .cache
+    when: |
+      {{ not ( isDir ".cache" ) }}
+  006-ensure-required-values:
+    order: 6
+    forEach:
+      item:
+        - GITHUB_REPO
+        - RELEASE_TAG
+        - ASSET
+        - SCHEMA_NAME
+      action:
+        steps:
+          print:
+            order: 1
+            log:
+              message: '{{ .forEach }}: {{ tpl (printf "{{ .vars.%s }}" .forEach) . }}'
+          check:
+            order: 2
+            abort:
+              message: 'Missing value for {{ .forEach }}'
+            when: '{{ isEmpty (tpl (printf "{{ .vars.%s }}" .forEach) . ) }}'
+  007-load-local-catalog:
+    order: 7
+    import:
+      file: catalog.yaml
+      path: input.catalog
+      mode: yaml
+  008-construct-vars:
+    order: 8
+    steps:
+      localPath:
+        template:
+          template: |
+            {{ printf "schemas/%s/%s/%s" .vars.GITHUB_REPO .vars.RELEASE_TAG .vars.ASSET }}
+          trim: true
+          path: temp.localPath
+      localDir:
+        template:
+          template: |
+            {{ printf "schemas/%s/%s" .vars.GITHUB_REPO .vars.RELEASE_TAG }}
+          trim: true
+          path: temp.localDir
+      remoteUrl:
+        template:
+          template: |
+            https://github.com/{{ .vars.GITHUB_REPO }}/releases/download/{{ .vars.RELEASE_TAG }}/{{ .vars.ASSET }}
+          trim: true
+          path: temp.remoteUrl
+      embedUrl:
+        template:
+          template: |
+            https://rkosegi.github.io/json-schemas/{{ .vars.GITHUB_REPO }}/{{ .vars.RELEASE_TAG }}/{{ .vars.ASSET }}
+          trim: true
+          path: temp.embedUrl
+  009-ensure-localdir:
+    order: 9
+    os:
+      mkdir:
+        path: '{{ .temp.localDir }}'
+        recursive: true
+    when: |
+      {{ not (isDir .temp.localDir) }}
+  010-download-from-project-release:
+    order: 10
+    exec:
+      program: curl
+      args:
+        - -fsSL
+        - -o
+        - '{{ .temp.localPath }}'
+        - '{{ .temp.remoteUrl }}'
+      stderr: .cache/010-stderr.txt
+    when: |
+      {{ not (fileNonEmpty .temp.localPath) }}
+  015-get-local-schema-index:
+    order: 15
+    template:
+      template: |
+        {{- $idx := -1 }}
+        {{- range $k,$v := .input.catalog.schemas }}
+        {{-   if eq $.vars.SCHEMA_NAME $v.name }}
+        {{      $idx = $k }}
+        {{      break }}
+        {{-   end }}
+        {{- end }}
+        {{- if eq $idx -1 }}
+        {{-   fail (printf "Can't find schema with name '%s'" $.vars.SCHEMA_NAME) }}
+        {{- else }}
+        {{    $idx }}
+        {{- end }}
+      trim: true
+      parseAs: int64
+      path: temp.index
+  016-update:
+    order: 16
+    template:
+      template: |
+        {{ $x := index .input.catalog.schemas .temp.index }}
+        {{ $_ := set $x.versions .vars.RELEASE_TAG .temp.embedUrl }}
+        {{ $x | toYaml }}
+      parseAs: yaml
+      path: '{{ printf "input.catalog.schemas[%d]" .temp.index }}'
+  020-export-updated-catalog:
+    order: 20
+    export:
+      path: input.catalog
+      file: catalog.yaml
+      format: yaml
+  999-export:
+    order: 999
+    export:
+      file: .cache/999-dump.yaml
+      format: yaml
+    # https://docs.github.com/en/actions/how-tos/monitor-workflows/enable-debug-logging
+    when: true
+    #  {{ eq .Env.ACTIONS_STEP_DEBUG "true" }}

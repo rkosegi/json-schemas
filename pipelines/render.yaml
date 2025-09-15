@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/rkosegi/yaml-pipeline/refs/heads/main/schemas/pipeline.json?
+# yaml-language-server: $schema=https://raw.githubusercontent.com/rkosegi/yaml-pipeline/refs/heads/main/schemas/pipeline.json?34
 # This pipeline merges remote JSON schema catalog with remote one and produces single catalog.json into "public" directory
 vars:
   localCatalog: catalog.yaml
@@ -89,6 +89,13 @@ steps:
       path: local
       file: public/catalog-local.json
       format: json
+  080-copy-local-schemas-to-public:
+    order: 80
+    os:
+      copy:
+        from: schemas
+        to: public
+        recursive: true
 
   999-export:
     order: 999
