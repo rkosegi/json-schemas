@@ -23,4 +23,10 @@ schemas:
     url: https://raw.githubusercontent.com/rkosegi/db2rest-bridge/refs/heads/main/schemas/config.schema.json
     versions:
       v1.0.6: https://github.com/rkosegi/db2rest-bridge/releases/download/v1.0.6/config.schema.json
+  - description: Base configuration for http servers
+    fileMatch:
+      - '**/config.yaml'
+    name: Base configuration for http servers
+    url: https://raw.githubusercontent.com/rkosegi/go-http-commons/refs/heads/main/schemas/server.config.json
+    versions: {}
 version: 1
