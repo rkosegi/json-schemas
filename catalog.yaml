@@ -28,5 +28,6 @@ schemas:
       - '**/config.yaml'
     name: Base configuration for http servers
     url: https://raw.githubusercontent.com/rkosegi/go-http-commons/refs/heads/main/schemas/server.config.json
-    versions: {}
+    versions:
+      v0.0.1: https://rkosegi.github.io/json-schemas/rkosegi/go-http-commons/v0.0.1/server.config.json
 version: 1
