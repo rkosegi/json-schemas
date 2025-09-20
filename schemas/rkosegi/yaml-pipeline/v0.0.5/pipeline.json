@@ -1,0 +1,839 @@
+{
+  "$defs": {
+    "abortOpSpec": {
+      "description": "AbortOp can be used to abort execution",
+      "properties": {
+        "message": {
+          "description": "The reason of abort",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object"
+    },
+    "actionMeta": {
+      "properties": {
+        "errorPropagation": {
+          "$ref": "#/$defs/errorPropagationPolicy",
+          "description": "ErrorPropagation configure behavior of error propagation. By default, error is propagated to caller."
+        },
+        "name": {
+          "description": "Name of this step, should be unique within the current scope",
+          "type": "string"
+        },
+        "order": {
+          "description": "Optional ordinal number that controls order of execution within parent step",
+          "type": "integer"
+        },
+        "when": {
+          "description": "Optional expression to make execution of this action conditional. Execution of this step is skipped when this expression is evaluated to false. If value of this field is omitted, then this action is executed",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "actionSpec": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/actionMeta",
+          "description": "Common action metadata"
+        },
+        {
+          "$ref": "#/$defs/opSpec",
+          "description": "Operations to perform"
+        }
+      ],
+      "properties": {
+        "steps": {
+          "additionalProperties": {
+            "$ref": "#/$defs/actionSpec"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "callOpSpec": {
+      "properties": {
+        "args": {
+          "additionalProperties": true,
+          "description": "Arguments to be passed to callable.\nLeaf values are recursively templated just before call is executed.",
+          "type": "object"
+        },
+        "argsPath": {
+          "description": "ArgsPath is optional path within the global data where arguments are stored prior to execution. When omitted, then default value of \"args\" is assumed. Note that passing arguments to nested callable is only possible if path is different, otherwise inner's arguments will overwrite outer's one. Template is accepted as possible value.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is name of callable previously registered using DefineOp.\nAttempt to use name that was not registered will result in error",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "defineOpSpec": {
+      "additionalProperties": false,
+      "description": "DefineOp can be used to define the ActionSpec and later recall it by name via CallOp.\nAttempt to define name that was defined before will result in an error.",
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/actionSpec"
+        },
+        "name": {
+          "description": "Name that will be used for registration",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "action"
+      ],
+      "type": "object"
+    },
+    "envOpSpec": {
+      "additionalProperties": false,
+      "description": "This op is used to import OS environment variables into data",
+      "properties": {
+        "exclude": {
+          "description": "Optional regexp which defines what to exclude.\nOnly item names NOT matching this regexp are added into data document.\nExclusion is considered after inclusion regexp is processed.",
+          "format": "regex",
+          "type": "string"
+        },
+        "include": {
+          "description": "Optional regexp which defines what to include.\nOnly item names matching this regexp are added into data document.",
+          "format": "regex",
+          "type": "string"
+        },
+        "path": {
+          "description": "Optional path within data tree under which \"Env\" container will be put. When omitted, then \"Env\" goes to root of data.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "errorPropagationPolicy": {
+      "description": "ErrorPropagation configure behavior of error propagation.\n * ignore - error is silently ignored",
+      "enum": [
+        "ignore"
+      ],
+      "type": "string"
+    },
+    "execOpSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "args": {
+          "description": "Optional arguments for program",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "dir": {
+          "description": "Program's working directory",
+          "type": "string"
+        },
+        "program": {
+          "description": "Program to execute",
+          "type": "string"
+        },
+        "saveExitCodeTo": {
+          "description": "Path within the global data where to set exit code.",
+          "type": "string"
+        },
+        "stderr": {
+          "description": "Path to file where program's stderr will be written upon completion.\nAny error occurred during write will result in error.",
+          "type": "string"
+        },
+        "stdout": {
+          "description": "Path to file where program's stdout will be written upon completion.\nAny error occurred during write will result in error.",
+          "type": "string"
+        },
+        "validExitCodes": {
+          "description": "List of exit codes that are assumed to be valid",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "program"
+      ],
+      "type": "object"
+    },
+    "exportOpSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "description": "File to export data onto",
+          "type": "string"
+        },
+        "format": {
+          "$ref": "#/$defs/outputFormat",
+          "description": "Format of output file"
+        },
+        "path": {
+          "description": "Path within data tree pointing to dom.Node to export. Empty path denotes whole document.\nIf path does not resolve, then empty document will be exported.\nIf output format is \"text\" then path must point to leaf.\nAny other output format must point to dom.Container.\nIf neither of these conditions are met, then it is considered as if path does not resolve at all.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "file",
+        "format"
+      ],
+      "type": "object"
+    },
+    "extOpSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "args": {
+          "additionalProperties": true,
+          "description": "holds arguments to be passed to function",
+          "type": "object"
+        },
+        "function": {
+          "description": "Name of the function that was registered with the Executor",
+          "type": "string"
+        }
+      },
+      "required": [
+        "function"
+      ],
+      "type": "object"
+    },
+    "forEachOpSpec": {
+      "additionalProperties": false,
+      "description": "ForEachOp can be used to repeat actions over list of items.\nThose items could be\n * files specified by globbing pattern\n * result of query from data tree (list values)\n * specified strings",
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/actionSpec",
+          "description": "Action to perform for every item"
+        },
+        "glob": {
+          "description": "Glob is pattern that will be used to match files on file system.\nMatched files will be used as iteration items.",
+          "type": "string"
+        },
+        "item": {
+          "description": "Item is list of specified strings to iterate over",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "query": {
+          "description": "Query is path within the data tree that will be attempted",
+          "type": "string"
+        },
+        "variable": {
+          "description": "Variable is name of variable to hold current iteration item.\nWhen omitted, default value of \"forEach\" will be used",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action"
+      ],
+      "type": "object"
+    },
+    "html2DomLayout": {
+      "description": "Layout defines how HTML-specific constructs are laid out into DOM tree.\n * default - will produce \"Value\" leaf for each text node.\n Child elements are collected into the list, if their name appears multiple times within the parent, otherwise they are regular child node.\n Attributes of element are put into container node \"Attrs\".\n Namespaces are ignored.",
+      "enum": [
+        "default"
+      ],
+      "type": "string"
+    },
+    "html2DomOpSpec": {
+      "description": "Allow for conversion of XML/HTML source DOM tree.\nThis is now deprecated and ImportOp with XML mode should be used instead.",
+      "properties": {
+        "from": {
+          "description": "path within the global data to the leaf node where XML source is stored as string",
+          "type": "string"
+        },
+        "layout": {
+          "$ref": "#/$defs/html2DomLayout",
+          "description": "layout defines how HTML data are put into DOM"
+        },
+        "query": {
+          "description": "optional xpath expression to use to extract subset from source XML document",
+          "type": "string"
+        },
+        "to": {
+          "description": "destination where to put converted document as dom.Container",
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ]
+    },
+    "importOpSpec": {
+      "properties": {
+        "file": {
+          "description": "File to read data from",
+          "type": "string"
+        },
+        "mode": {
+          "$ref": "#/$defs/parseFileMode",
+          "description": "How to parse the file before the import takes place"
+        },
+        "path": {
+          "description": "Path at which to import the data.",
+          "type": "string"
+        },
+        "xml": {
+          "$ref": "#/$defs/xmlImportOptions",
+          "description": "XML/HTML loading options"
+        }
+      },
+      "required": [
+        "file",
+        "mode",
+        "path"
+      ],
+      "type": "object"
+    },
+    "logOpSpec": {
+      "description": "LogOp just logs message to logger",
+      "properties": {
+        "message": {
+          "description": "Message to log",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object"
+    },
+    "loopOpSpec": {
+      "description": "LoopOp is similar to ForEach, but it also has initial and post actions",
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/actionSpec",
+          "description": "Action is action that is executed every loop iteration"
+        },
+        "init": {
+          "$ref": "#/$defs/actionSpec",
+          "description": "Init is called just before any loop execution takes place"
+        },
+        "postAction": {
+          "$ref": "#/$defs/actionSpec",
+          "description": "PostAction is action that is executed after every loop iteration.\nThis is right place to modify loop variables, such as incrementing counter"
+        },
+        "test": {
+          "description": "Test is condition that is tested before each iteration.\nWhen evaluated to true, execution will proceed with next iteration, false terminates loop immediately",
+          "type": "string"
+        }
+      },
+      "required": [
+        "test",
+        "action"
+      ],
+      "type": "object"
+    },
+    "opSpec": {
+      "properties": {
+        "abort": {
+          "$ref": "#/$defs/abortOpSpec",
+          "description": "Abort is able to signal error, so that pipeline can abort execution"
+        },
+        "call": {
+          "$ref": "#/$defs/callOpSpec",
+          "description": "Call calls previously defined callable"
+        },
+        "define": {
+          "$ref": "#/$defs/defineOpSpec",
+          "description": "Define defines callable ActionSpec"
+        },
+        "env": {
+          "$ref": "#/$defs/envOpSpec",
+          "description": "Env adds OS environment variables into data document"
+        },
+        "exec": {
+          "$ref": "#/$defs/execOpSpec",
+          "description": "Exec executes program"
+        },
+        "export": {
+          "$ref": "#/$defs/exportOpSpec",
+          "description": "Export exports data document into file"
+        },
+        "ext": {
+          "$ref": "#/$defs/extOpSpec",
+          "description": "Ext allows runtime-registered extension action to be executed"
+        },
+        "forEach": {
+          "$ref": "#/$defs/forEachOpSpec",
+          "description": "ForEach execute same operation in a loop for every configured item"
+        },
+        "html2dom": {
+          "$ref": "#/$defs/html2DomOpSpec",
+          "description": "Html2Dom can be used to process HTML source into DOM"
+        },
+        "import": {
+          "$ref": "#/$defs/importOpSpec",
+          "description": "Import loads content of file into data document."
+        },
+        "log": {
+          "$ref": "#/$defs/logOpSpec",
+          "description": "Log logs arbitrary message to logger"
+        },
+        "loop": {
+          "$ref": "#/$defs/loopOpSpec",
+          "description": "Loop allows for execution to be done in a loop"
+        },
+        "os": {
+          "$ref": "#/$defs/osOpSpec",
+          "description": "OS operations"
+        },
+        "patch": {
+          "$ref": "#/$defs/patchOpSpec",
+          "description": "Patch performs RFC6902-style patch on data document."
+        },
+        "set": {
+          "$ref": "#/$defs/setOpSpec",
+          "description": "Set sets data in data document."
+        },
+        "template": {
+          "$ref": "#/$defs/templateOpSpec",
+          "description": "Template allows to render value at runtime"
+        },
+        "templateFile": {
+          "$ref": "#/$defs/templateFileOpSpec",
+          "description": "TemplateFile can be used to render template file"
+        }
+      },
+      "type": "object"
+    },
+    "osFileMode": {
+      "description": "POSIX file mode/permission",
+      "type": "integer"
+    },
+    "osFilePath": {
+      "description": "Arbitrary file path",
+      "type": "string"
+    },
+    "osOpChdirSpec": {
+      "description": "Change working directory",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/osFilePath",
+          "description": "Path to the directory to change into"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "osOpChmodSpec": {
+      "description": "Change file mode/permission",
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/osFileMode",
+          "description": "File mode to change to"
+        },
+        "path": {
+          "$ref": "#/$defs/osFilePath",
+          "description": "Path to the file that is subject to mode change"
+        }
+      },
+      "required": [
+        "path",
+        "mode"
+      ]
+    },
+    "osOpCopySpec": {
+      "description": "Copy file(s) from source path to the destination",
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/osFilePath",
+          "description": "Source file(s) to copy"
+        },
+        "to": {
+          "$ref": "#/$defs/osFilePath",
+          "description": "Destination directory. Must exists."
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "type": "object"
+    },
+    "osOpGetcwdSpec": {
+      "description": "Gets current working directory",
+      "properties": {
+        "storeTo": {
+          "$ref": "#/$defs/storeResultTo"
+        }
+      },
+      "required": [
+        "storeTo"
+      ],
+      "type": "object"
+    },
+    "osOpHostnameSpec": {
+      "description": "Gets system hostname",
+      "properties": {
+        "storeTo": {
+          "$ref": "#/$defs/storeResultTo"
+        }
+      },
+      "required": [
+        "storeTo"
+      ],
+      "type": "object"
+    },
+    "osOpLinkSpec": {
+      "description": "Create link from old file to new file",
+      "properties": {
+        "newName": {
+          "$ref": "#/$defs/osFilePath",
+          "description": "New file name that will point to old file"
+        },
+        "oldName": {
+          "$ref": "#/$defs/osFilePath",
+          "description": "File to which new link will be pointing to"
+        },
+        "symbolic": {
+          "description": "When true, link will be symbolic, otherwise it will be hardlink",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "newName",
+        "oldName",
+        "symbolic"
+      ],
+      "type": "object"
+    },
+    "osOpMkdirSpec": {
+      "description": "Create directory",
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/osFileMode",
+          "description": "File mode for newly created directory"
+        },
+        "path": {
+          "$ref": "#/$defs/osFilePath",
+          "description": "Path to directory to be created"
+        },
+        "recursive": {
+          "$ref": "#/$defs/recursiveFlag",
+          "description": "If true, then all parent directories are created as necessary"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "osOpReadDirSpec": {
+      "description": "Read file entries in directory",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/osFilePath",
+          "description": "Path to be removed"
+        },
+        "storeTo": {
+          "$ref": "#/$defs/storeResultTo"
+        }
+      },
+      "required": [
+        "path",
+        "storeTo"
+      ],
+      "type": "object"
+    },
+    "osOpRemoveSpec": {
+      "description": "Remove a file",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/osFilePath",
+          "description": "Path to be removed"
+        },
+        "recursive": {
+          "$ref": "#/$defs/recursiveFlag",
+          "description": "If true, then all child paths are removed first."
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "osOpSpec": {
+      "additionalProperties": false,
+      "description": "OS operation spec",
+      "properties": {
+        "chdir": {
+          "$ref": "#/$defs/osOpChdirSpec"
+        },
+        "chmod": {
+          "$ref": "#/$defs/osOpChmodSpec"
+        },
+        "copy": {
+          "$ref": "#/$defs/osOpCopySpec"
+        },
+        "getcwd": {
+          "$ref": "#/$defs/osOpGetcwdSpec"
+        },
+        "hostname": {
+          "$ref": "#/$defs/osOpHostnameSpec"
+        },
+        "link": {
+          "$ref": "#/$defs/osOpLinkSpec"
+        },
+        "mkdir": {
+          "$ref": "#/$defs/osOpMkdirSpec"
+        },
+        "readdir": {
+          "$ref": "#/$defs/osOpReadDirSpec"
+        },
+        "remove": {
+          "$ref": "#/$defs/osOpRemoveSpec"
+        },
+        "stat": {
+          "$ref": "#/$defs/osOpStatSpec"
+        },
+        "userhome": {
+          "$ref": "#/$defs/osOpUserHomeSpec"
+        }
+      }
+    },
+    "osOpStatSpec": {
+      "description": "Gets a file info",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/osFilePath",
+          "description": "Path to the file to get info for"
+        },
+        "storeTo": {
+          "$ref": "#/$defs/storeResultTo"
+        }
+      },
+      "required": [
+        "path",
+        "storeTo"
+      ],
+      "type": "object"
+    },
+    "osOpUserHomeSpec": {
+      "description": "Gets users' home directory path",
+      "properties": {
+        "storeTo": {
+          "$ref": "#/$defs/storeResultTo"
+        }
+      },
+      "required": [
+        "storeTo"
+      ]
+    },
+    "outputFormat": {
+      "description": "Format of output file",
+      "enum": [
+        "yaml",
+        "json",
+        "properties",
+        "text"
+      ],
+      "type": "string"
+    },
+    "parseFileMode": {
+      "description": "ParseFileMode defines how the file is parsed before is put into data tree\n * binary - File is read and encoded using base64 string into data tree\n * text - File is read as-is and is assumed it represents utf-8 encoded byte stream\n * yaml - File is parsed as YAML document and put as child node into data tree\n * xml - File is parsed as XML document and transformed using selected layout.\n * json - File is parsed as JSON document and put as child node into data tree\n * properties - File is parsed as Java properties into map[string]interface{} and put as child node into data tree",
+      "enum": [
+        "binary",
+        "text",
+        "yaml",
+        "xml",
+        "json",
+        "properties"
+      ],
+      "type": "string"
+    },
+    "parseTextAs": {
+      "description": "ParseTextAs defines how to parse text.\n * none - do not parse, it's just a text (dom.Leaf)\n * yaml - parse text as a YAML source into dom.Node\n * float64 - parse text as float64 number into dom.Leaf\n * int64 - parse text as int64 number into dom.Leaf\n",
+      "enum": [
+        "none",
+        "yaml",
+        "float64",
+        "int64"
+      ],
+      "type": "string"
+    },
+    "patchOpSpec": {
+      "description": "PatchOp performs RFC6902-style patch on global data document.",
+      "properties": {
+        "from": {
+          "description": "Path used as a source with Copy and Move operations",
+          "type": "string"
+        },
+        "op": {
+          "description": "Op is RFC6902 operation",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path is used as general path for every operation",
+          "type": "string"
+        },
+        "value": {
+          "additionalProperties": true,
+          "description": "Value to be used for op. This takes precedence over ValueFrom.",
+          "type": "object"
+        },
+        "valueFrom": {
+          "description": "Allow a value to be read from data tree at given path.\n Only considered when Value is not specified",
+          "type": "string"
+        }
+      },
+      "required": [
+        "op",
+        "path"
+      ],
+      "type": "object"
+    },
+    "pipelineSpec": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/actionSpec"
+        }
+      ],
+      "description": "Pipeline operation specification",
+      "properties": {
+        "services": {
+          "additionalProperties": {
+            "$ref": "#/$defs/serviceSpec"
+          },
+          "description": "Services declaration"
+        },
+        "vars": {
+          "additionalProperties": true,
+          "description": "Initial variables that will be set under .vars",
+          "type": "object"
+        }
+      }
+    },
+    "recursiveFlag": {
+      "description": "Whether to apply operation recursively",
+      "type": "boolean"
+    },
+    "serviceSpec": {
+      "description": "Service definition",
+      "properties": {
+        "args": {
+          "additionalProperties": true,
+          "description": "Service configuration"
+        }
+      }
+    },
+    "setOpSpec": {
+      "properties": {
+        "data": {
+          "additionalProperties": true,
+          "description": "Arbitrary data to put into data tree",
+          "type": "object"
+        },
+        "path": {
+          "description": "Path at which to put data.\nIf omitted, then data are merged into root of document",
+          "type": "string"
+        },
+        "strategy": {
+          "$ref": "#/$defs/setStrategy",
+          "description": "Strategy defines how that are handled when conflict during set/add of data occur."
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    },
+    "setStrategy": {
+      "description": "Defines how data are handled when conflict occurs during set.\n * replace - old value is replaced with new.\n * merge - merge is attempted by applying new value on top of old one.",
+      "enum": [
+        "replace",
+        "merge"
+      ],
+      "type": "string"
+    },
+    "storeResultTo": {
+      "description": "Path to location within the data, where result of operation is store upon success",
+      "type": "string"
+    },
+    "templateFileOpSpec": {
+      "description": "TemplateFileOp can be used to render template from file and write result to output.",
+      "properties": {
+        "file": {
+          "description": "Path to file with template",
+          "type": "string"
+        },
+        "output": {
+          "description": "Output is path to output file",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path is path within the global data where data are read from (must be container). Those data are set to template engine.When omitted, then root of global data is assumed",
+          "type": "string"
+        }
+      },
+      "required": [
+        "file",
+        "output"
+      ],
+      "type": "object"
+    },
+    "templateOpSpec": {
+      "description": "TemplateOp can be used to render value from data at runtime",
+      "properties": {
+        "parseAs": {
+          "$ref": "#/$defs/parseTextAs",
+          "description": "How to treat rendered text after template engine completes successfully.\nt's responsibility of template to produce source that is parseable by chosen mode"
+        },
+        "path": {
+          "description": "Path within global data tree where to set result at",
+          "type": "string"
+        },
+        "template": {
+          "description": "Template to render",
+          "type": "string"
+        },
+        "trim": {
+          "default": false,
+          "description": "When true, whitespace is trimmed off the value",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "template",
+        "path"
+      ],
+      "type": "object"
+    },
+    "xmlImportOptions": {
+      "description": "Configuration to customize XML loading. Only relevant for 'xml' mode",
+      "properties": {
+        "layout": {
+          "$ref": "#/$defs/xmlLayout",
+          "description": "layout defines how XML/HTML data are put into DOM"
+        },
+        "query": {
+          "description": "xpath expression to use to extract subset from source XML document. When omitted, then \"/html\" is assumed",
+          "type": "string"
+        }
+      }
+    },
+    "xmlLayout": {
+      "description": "Layout defines how XML-specific constructs are laid out into DOM tree.\n * default - will produce \"Value\" leaf for each text node.\n Child elements are collected into the list, if their name appears multiple times within the parent, otherwise they are regular child node.\n Attributes of element are put into container node \"Attrs\".\n Namespaces are ignored.",
+      "enum": [
+        "default"
+      ],
+      "type": "string"
+    }
+  },
+  "$id": "https://github.com/rkosegi/yaml-pipeline/schemas/pipeline",
+  "$ref": "#/$defs/pipelineSpec",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Pipeline specification",
+  "type": "object"
+}

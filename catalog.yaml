@@ -9,6 +9,7 @@ schemas:
       v0.0.1: https://rkosegi.github.io/json-schemas/rkosegi/yaml-pipeline/v0.0.1/pipeline.json
       v0.0.2: https://rkosegi.github.io/json-schemas/rkosegi/yaml-pipeline/v0.0.2/pipeline.json
       v0.0.3: https://rkosegi.github.io/json-schemas/rkosegi/yaml-pipeline/v0.0.3/pipeline.json
+      v0.0.5: https://rkosegi.github.io/json-schemas/rkosegi/yaml-pipeline/v0.0.5/pipeline.json
   - description: RouterOS 2 REST bridge configuration schema
     fileMatch:
       - '**/config.yaml'
