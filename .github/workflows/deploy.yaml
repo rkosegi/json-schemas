@@ -40,7 +40,7 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Render catalog
-        uses: rkosegi/yaml-pipeline@3436d8869788ee8c63f524ed2dbc8dcee58cf0c9 #v0.0.5
+        uses: rkosegi/yaml-pipeline@a437bdc7d56634842fe49a41a31fc6a2c586e6b3 #v0.0.6
         with:
           file: pipelines/render.yaml
       - name: Upload artifact
