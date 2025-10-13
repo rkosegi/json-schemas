@@ -50,7 +50,7 @@ jobs:
           file: pipelines/embed.yaml
           args: --set vars.GITHUB_REPO=${{ inputs.github_repo }} --set vars.RELEASE_TAG=${{ inputs.release_tag }} --set vars.ASSET=${{ inputs.release_asset }} --set vars.SCHEMA_NAME="${{ inputs.local_schema }}"
 
-      - uses: stefanzweifel/git-auto-commit-action@v6
+      - uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: Add ${{ inputs.release_asset }} from ${{ inputs.github_repo }}@${{ inputs.release_tag }}
           file_pattern: catalog.yaml schemas
