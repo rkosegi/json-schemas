@@ -37,6 +37,6 @@ repos:
         args:
           - https://raw.githubusercontent.com/rkosegi/yaml-pipeline/refs/heads/main/schemas/pipeline.json
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.29.0
+    rev: v8.29.1
     hooks:
       - id: gitleaks
