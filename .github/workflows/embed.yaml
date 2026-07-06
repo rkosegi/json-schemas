@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Embed schema using pipeline
-        uses: rkosegi/yaml-pipeline@012a65757bc5b62d411048f78064105bf3f4437d #v0.0.9
+        uses: rkosegi/yaml-pipeline@9264112051bd30621b8faa627a146004a300c383 #v0.0.10
         with:
           file: pipelines/embed.yaml
           args: --set vars.GITHUB_REPO=${{ inputs.github_repo }} --set vars.RELEASE_TAG=${{ inputs.release_tag }} --set vars.ASSET=${{ inputs.release_asset }} --set vars.SCHEMA_NAME="${{ inputs.local_schema }}"
